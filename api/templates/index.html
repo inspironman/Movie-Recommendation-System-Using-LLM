@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenAI Movies</title>
+  <link rel="shortcut icon" href="{{ url_for('static', filename='movie.png') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}" />
+</head>
+
+<body>
+  <img src="{{ url_for('static', filename='movie.png') }}" class="icon" alt="Movie icon" />
+  <h1>Movie Recommendation System</h1>
+
+  {% if not recommendation_type %}
+  <div class="recommendation-types">
+    <h3>Choose your recommendation type:</h3>
+    <a href="{{ url_for('index', type='content') }}" class="button">Content-based</a>
+    <a href="{{ url_for('index', type='genre') }}" class="button">Genre-based</a>
+    <a href="{{ url_for('index', type='mood') }}" class="button">Mood-based</a>
+  </div>
+  {% endif %}
+
+  {% if recommendation_type == 'content' %}
+  <h3>Content-based Movie Recommendations</h3>
+  <form action="{{ url_for('content_based') }}" method="post">
+    <input type="text" name="movie" placeholder="Enter a movie you like" required />
+    <input type="number" name="number" placeholder="Number of recommendations (1-10)" required min="1" max="10" />
+    <input type="submit" value="Get Recommendations" />
+  </form>
+  {% elif recommendation_type == 'genre' %}
+  <h3>Genre-based Movie Recommendations</h3>
+  <form action="{{ url_for('genre_based') }}" method="post">
+    <input type="text" name="category" placeholder="Enter the genre e.g. thriller, comedy" required />
+    <input type="number" name="number" placeholder="Number of recommendations (1-10)" required min="1" max="10" />
+    <input type="submit" value="Get Recommendations" />
+  </form>
+  {% elif recommendation_type == 'mood' %}
+  <h3>Mood-based Movie Recommendations</h3>
+  <form action="{{ url_for('mood_based') }}" method="post">
+    <input type="text" name="mood" placeholder="Enter your mood e.g. happy, sad, excited" required />
+    <input type="number" name="number" placeholder="Number of recommendations (1-10)" required min="1" max="10" />
+    <input type="submit" value="Get Recommendations" />
+  </form>
+  {% endif %}
+
+  {% if movies %}
+  <div class="result">
+    {% for movie in movies %}
+    <div class="movie-card">
+      {% if movie.poster_path %}
+      <img src="{{ movie.poster_path }}" alt="{{ movie.title }} poster" class="movie-poster">
+      {% endif %}
+      <div class="movie-details">
+        <h4>{{ movie.title }} ({{ movie.release_date[:4] }})</h4>
+        <p class="rating">Rating: {{ movie.vote_average }}/10</p>
+        <p class="overview">{{ movie.overview }}</p>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</body>
+</html>
