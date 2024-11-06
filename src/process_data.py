@@ -8,14 +8,11 @@ def load_datasets(movies_path, credits_path):
     :param credits_path: Path to the credits dataset
     :return: Merged DataFrame
     """
-    # Load the datasets
     movies_df = pd.read_csv(movies_path)
     credits_df = pd.read_csv(credits_path)
     
-    # Merge the datasets on the 'id' and 'movie_id' columns
     merged_df = movies_df.merge(credits_df, on='title')
     
-    # Print column names for debugging
     print("Columns in merged DataFrame:", merged_df.columns.tolist())
     
     return merged_df
@@ -53,10 +50,8 @@ def filter_columns(merged_df):
     :param merged_df: Merged DataFrame from movies and credits datasets
     :return: Filtered DataFrame
     """
-    # Check the actual columns available in the merged DataFrame
     print("Columns in merged DataFrame:", merged_df.columns.tolist())
     
-    # Adjust based on actual available columns
     filtered_df = merged_df[['movie_id', 'title', 'overview','genres', 'keywords', 'vote_average', 'vote_count', 'popularity', 'release_date', 'cast', 'crew']]
     filtered_df.dropna(inplace=True)
     filtered_df['genres'] = filtered_df['genres'].apply(convert)
@@ -78,17 +73,12 @@ def save_filtered_data(filtered_df, output_path):
     print(f"Filtered data saved to {output_path}")
 
 if __name__ == "__main__":
-    # File paths
     movies_path = 'D:/MRS/llm-openai/data/tmdb_5000_movies.csv'
     credits_path = 'D:/MRS/llm-openai/data/tmdb_5000_credits.csv'
     output_path = 'D:/MRS/llm-openai/data/filtered_movies_data.csv'
 
-    
-    # Load datasets
     merged_df = load_datasets(movies_path, credits_path)
     
-    # Filter the columns
     filtered_df = filter_columns(merged_df)
     
-    # Save the filtered data
     save_filtered_data(filtered_df, output_path)

@@ -9,7 +9,6 @@ class ContentRecommender:
         self.cosine_sim = self.preprocess_and_compute_similarity()
 
     def preprocess_and_compute_similarity(self):
-        # Combine relevant features into a single string
         self.movies_df['combined_features'] = (
             self.movies_df['title'].fillna('') + ' ' + 
             self.movies_df['overview'].fillna('') + ' ' +
@@ -23,26 +22,17 @@ class ContentRecommender:
         tfidf = TfidfVectorizer(stop_words='english')
         tfidf_matrix = tfidf.fit_transform(self.movies_df['combined_features'])
         
-        # Compute cosine similarity
         return cosine_similarity(tfidf_matrix, tfidf_matrix)
 
     def get_recommendations(self, title, num_recommendations=10):
-        # Get the index of the movie that matches the title
         idx = self.movies_df[self.movies_df['title'] == title].index[0]
 
-        # Get the pairwise similarity scores of all movies with that movie
         sim_scores = list(enumerate(self.cosine_sim[idx]))
-
-        # Sort the movies based on the similarity scores
         sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
-
-        # Get the scores of the most similar movies
         sim_scores = sim_scores[1:num_recommendations+1]
 
-        # Get the movie indices
         movie_indices = [i[0] for i in sim_scores]
 
-        # Return the top most similar movies
         return self.movies_df['title'].iloc[movie_indices].tolist()
 
     def get_movie_titles(self):
