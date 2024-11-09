@@ -43,3 +43,6 @@ tzdata
 urllib3
 Werkzeug
 yarl
+sqlalchemy 
+psycopg2-binary
+ 
