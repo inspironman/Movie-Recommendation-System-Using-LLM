@@ -25,52 +25,74 @@
           <h1 class="logo"><a href="{{ url_for('index') }}">Movie Recommender</a></h1>
 
           <div class="auth-buttons">
+            {% if 'user_id' in session and username %}
+            <div class="d-flex align-items-center">
+              <span class="text-light me-3">
+                <i class="fas fa-user me-2"></i>{{ username }}
+              </span>
+              <form action="{{ url_for('logout') }}" method="post" class="m-0">
+                <button type="submit" class="btn btn-outline-light">
+                  <i class="fas fa-sign-out-alt me-1"></i>Logout
+                </button>
+              </form>
+            </div>
+            {% else %}
             <button class="btn btn-outline-light me-2" data-bs-toggle="modal" data-bs-target="#loginModal">
               <i class="fas fa-sign-in-alt me-1"></i> Sign In
             </button>
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#registerModal">
               <i class="fas fa-user-plus me-1"></i> Sign Up
             </button>
+            {% endif %}
           </div>
         </div>
+
         <!-- Login Modal -->
         <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
-          <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-dialog">
             <div class="modal-content">
-              <div class="modal-header border-bottom-0">
-                <h5 class="modal-title" id="loginModalLabel">Welcome Back!</h5>
+              <div class="modal-header">
+                <h5 class="modal-title" id="loginModalLabel">Sign In</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
-              <div class="modal-body px-5 py-4">
+              <div class="modal-body">
                 <form action="{{ url_for('login') }}" method="post">
-                  <div class="mb-4">
+                  {% with messages = get_flashed_messages(with_categories=true) %}
+                  {% if messages %}
+                  {% for category, message in messages %}
+                  <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                  </div>
+                  {% endfor %}
+                  {% endif %}
+                  {% endwith %}
+                  <div class="mb-3">
                     <label for="username" class="form-label">Username</label>
-                    <div class="input-group">
-                      <span class="input-group-text"><i class="fas fa-user"></i>
-                        <input type="text" class="form-control" id="username" name="username" required>
-                    </div>
+                    <input type="text" class="form-control" id="username" name="username"
+                      value="{{ login_username if login_username else '' }}" required>
                   </div>
-                  <div class="mb-4">
+                  <div class="mb-3">
                     <label for="password" class="form-label">Password</label>
-                    <div class="input-group">
-                      <span class="input-group-text"><i class="fas fa-lock"></i>
-                        <input type="password" class="form-control" id="password" name="password" required>
-                    </div>
+                    <input type="password" class="form-control" id="password" name="password" required>
                   </div>
-                  <div class="mb-4 form-check">
-                    <input type="checkbox" class="form-check-input" id="remember">
-                    <label class="form-check-label" for="remember">Remember me</label>
-                  </div>
-                  <button type="submit" class="btn btn-primary w-100 mb-3">Sign In</button>
-                  <p class="text-center mb-0">Don't have an account?
-                    <a href="#" data-bs-toggle="modal" data-bs-target="#registerModal" data-bs-dismiss="modal">Sign
-                      Up</a>
-                  </p>
+                  <button type="submit" class="btn btn-primary w-100">Login</button>
                 </form>
               </div>
             </div>
           </div>
         </div>
+
+        {% if show_login_modal %}
+        <script>
+          document.addEventListener('DOMContentLoaded', function () {
+            var loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+            loginModal.show();
+          });
+        </script>
+        {% endif %}
+
+
 
         <!-- Register Modal -->
         <div class="modal fade" id="registerModal" tabindex="-1" aria-labelledby="registerModalLabel"
@@ -82,25 +104,41 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
               <div class="modal-body px-5 py-4">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                  {{ message }}
+                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+                {% endif %}
+                {% endwith %}
                 <form action="{{ url_for('register') }}" method="post">
                   <div class="mb-4">
                     <label for="reg-username" class="form-label">Username</label>
                     <div class="input-group">
-                      <span class="input-group-text"><i class="fas fa-user"></i>
+                      <span class="input-group-text">
+                        <i class="fas fa-user"></i>
+
                         <input type="text" class="form-control" id="reg-username" name="username" required>
                     </div>
                   </div>
                   <div class="mb-4">
                     <label for="reg-email" class="form-label">Email</label>
                     <div class="input-group">
-                      <span class="input-group-text"><i class="fas fa-envelope"></i>
+                      <span class="input-group-text">
+                        <i class="fas fa-envelope"></i>
+
                         <input type="email" class="form-control" id="reg-email" name="email" required>
                     </div>
                   </div>
                   <div class="mb-4">
                     <label for="reg-password" class="form-label">Password</label>
                     <div class="input-group">
-                      <span class="input-group-text"><i class="fas fa-lock"></i>
+                      <span class="input-group-text">
+                        <i class="fas fa-lock"></i>
+
                         <input type="password" class="form-control" id="reg-password" name="password" required>
                     </div>
                   </div>
@@ -113,6 +151,7 @@
             </div>
           </div>
         </div>
+
 
         <!-- Main Navigation -->
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark rounded mb-3">
@@ -185,30 +224,31 @@
     </main>
   </div>
 
-<!-- Entry Modal -->
-<div class="modal fade" id="entryModal" tabindex="-1" aria-labelledby="entryModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="entryModalLabel"></h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <!-- Form with dynamic action based on recommendation type -->
-        <form id="entryModalForm" method="post">
-          <div id="dynamicField" class="mb-3">
-            <!-- This field will be updated based on recommendation type -->
-          </div>
-          <div class="mb-3">
-            <label for="number" class="form-label">Number</label>
-            <input type="number" class="form-control" id="number" name="number" placeholder="Enter number of recommendations">
-          </div>
-          <button type="submit" class="btn btn-primary w-100">Submit</button>
-        </form>
+  <!-- Entry Modal -->
+  <div class="modal fade" id="entryModal" tabindex="-1" aria-labelledby="entryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="entryModalLabel"></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <!-- Form with dynamic action based on recommendation type -->
+          <form id="entryModalForm" method="post">
+            <div id="dynamicField" class="mb-3">
+              <!-- This field will be updated based on recommendation type -->
+            </div>
+            <div class="mb-3">
+              <label for="number" class="form-label">Number</label>
+              <input type="number" class="form-control" id="number" name="number"
+                placeholder="Enter number of recommendations">
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Submit</button>
+          </form>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
   <!-- Bootstrap JS and Custom JavaScript -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -216,12 +256,12 @@
     function openEntryModal(type) {
       // Set the modal title based on recommendation type
       document.getElementById('entryModalLabel').textContent = type + ' Recommendation';
-      
+
       // Set form action based on recommendation type
       const entryModalForm = document.getElementById('entryModalForm');
       const dynamicField = document.getElementById('dynamicField');
       dynamicField.innerHTML = ''; // Clear previous input field
-  
+
       if (type === 'Content-based') {
         entryModalForm.action = "{{ url_for('content_based') }}";
         dynamicField.innerHTML = `
@@ -241,7 +281,7 @@
           <input type="text" class="form-control" id="moodType" name="mood" placeholder="Enter mood type">
         `;
       }
-  
+
       // Show the modal
       const entryModal = new bootstrap.Modal(document.getElementById('entryModal'));
       entryModal.show();

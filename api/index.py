@@ -41,7 +41,9 @@ def get_movie_details(movie_title):
 @app.route('/')
 def index():
     recommendation_type = request.args.get('type')
-    return render_template('index.html', recommendation_type=recommendation_type)
+    username = session.get('username')
+    return render_template('index.html', recommendation_type=recommendation_type, username=username)
+
 
 
 @app.route("/genre_based", methods=("GET", "POST"))
@@ -148,64 +150,74 @@ def generate_genre_based_prompt(number, category):
 def generate_mood_based_prompt(number, category):
     return f"""Recommend the best movies to watch. If a person is feeling {category.capitalize()}"""
 
-@app.route('/register', methods=['POST'])
+@app.route('/register', methods=['GET', 'POST'])
 def register():
-    if request.content_type == 'application/json':
-        data = request.json
-        username = data.get('username')
-        email = data.get('email')
-        password = data.get('password')
-    else:
+    if request.method == 'POST':
         username = request.form.get('username')
         email = request.form.get('email')
         password = request.form.get('password')
-    
-    if not all([username, email, password]):
-        return jsonify({"error": "Missing required fields"}), 400
-    
-    result = register_user(username, email, password)
-    if result == "User registered successfully":
-        flash("Registration successful! You can now log in.", "success")
-        return jsonify({"message": result}), 201
-    else:
-        flash(result, "error")
-        return jsonify({"error": result}), 400
 
+        if not username or not email or not password:
+            flash('All fields are required', 'error')
+            return render_template('index.html', show_register_modal=True)
 
-@app.route('/login', methods=['POST'])
+        # Try to register the user
+        result = register_user(username, email, password)
+        
+        if result == "User registered successfully":
+            # If registration successful, authenticate and log in
+            user = authenticate_user(username, password)
+            if user:
+                session['user_id'] = user['id']
+                session['username'] = user['username']
+                flash('Registration successful! Welcome to Movie Recommender!', 'success')
+                return redirect(url_for('index'))
+        else:
+            # If registration failed, show error
+            flash(result, 'error')
+            return render_template('index.html', 
+                                show_register_modal=True,
+                                reg_username=username,
+                                reg_email=email)
+
+    return redirect(url_for('index'))
+
+@app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.content_type == 'application/json':
-        data = request.json
-        username = data.get('username')
-        password = data.get('password')
-    else:
+    if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
-    
-    if not username or not password:
-        return jsonify({"error": "Missing username or password"}), 400
-    
-    user = authenticate_user(username, password)
-    
-    if user:
-        session['user_id'] = user['id']  # Set user_id in session
-        return jsonify({
-            "message": "Login successful",
-            "user": {
-                "id": user['id'],
-                "username": user['username'],
-                "email": user['email']
-                # Add any other non-sensitive user details you want to return
-            }
-        }), 200
-    else:
-        return jsonify({"error": "Invalid username or password"}), 401
+        
+        if not username or not password:
+            flash('Missing username or password', 'error')
+            return render_template('index.html', show_login_modal=True)
+        
+        user = authenticate_user(username, password)
+        
+        if user:
+            session['user_id'] = user['id']
+            session['username'] = user['username']
+            flash('Login successful!', 'success')
+            return redirect(url_for('index'))
+        else:
+            flash('Invalid username or password', 'error')
+            # Pass show_login_modal=True to keep the modal open
+            return render_template('index.html', 
+                                show_login_modal=True, 
+                                login_username=username)
+
+    return redirect(url_for('index'))
 
 
-@app.route('/logout')
+
+
+
+@app.route('/logout', methods=['POST'])
 def logout():
-    session.pop('user_id', None)
-    return jsonify({"message": "Logged out successfully"}), 200
+    session.clear()
+    return redirect(url_for('index'))
+
+
 
 
 @app.route('/check_login')
