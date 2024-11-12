@@ -31,21 +31,41 @@ body {
   color: #ffd700 !important;
 }
 
-/* Movie Card Styles */
+/* Container for Perspective */
+.movie-card-container {
+  perspective: 1000px;
+}
+
 .movie-card {
-  background-color: #2c2c2c;
+  width: 100%;
+  height: 520px;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.6s ease;
+}
+
+.movie-card-container:hover .movie-card {
+  transform: rotateY(180deg);
+}
+/* Front and Back Faces */
+.movie-card-front, .movie-card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
   border-radius: 8px;
   overflow: hidden;
-  transition: transform 0.3s ease;
 }
 
-.movie-card:hover {
-  transform: translateY(-5px);
+.movie-card-back {
+  transform: rotateY(180deg);
+  overflow-y: auto;  /* Allows scrolling for longer content */
 }
-
-.movie-image {
-  position: relative;
-  overflow: hidden;
+/* Front of the Movie Card */
+.movie-card-front {
+  background-color: #2c2c2c;
+  display: flex;
+  flex-direction: column;
 }
 
 .movie-image img {
@@ -60,7 +80,7 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0,0,0,0.7);
+  background: rgba(0, 0, 0, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -68,10 +88,11 @@ body {
   transition: opacity 0.3s ease;
 }
 
-.movie-card:hover .play-overlay {
+.movie-card-front:hover .play-overlay {
   opacity: 1;
 }
 
+/* Front Movie Info */
 .movie-info {
   padding: 1rem;
 }
@@ -81,10 +102,51 @@ body {
   margin-bottom: 0.5rem;
 }
 
-/* Rating Stars */
 .rating {
   color: #ffd700;
 }
+
+/* Back of the Movie Card */
+.movie-card-back {
+  background-color: #1e1e1e;
+  color: #fff;
+  padding: 1rem;
+  transform: rotateY(180deg);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start; /* Start at the top */
+  overflow-y: auto; /* Enable scrolling if content overflows */
+  max-height: 100%; /* Allow for full use of card height */
+}
+
+/* Content inside the Back of the Card */
+.movie-card-back h5, .movie-card-back p {
+  margin: 0.5rem 0;
+}
+
+.back-content {
+  flex: 1; /* Ensures content takes up the available space */
+}
+
+/* Style for Trailer Link */
+.trailer-link {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 1rem;
+  text-decoration: none;
+  color: #ffd700;
+  font-size: 1.5rem;
+}
+
+.trailer-link img {
+  width: 40px;
+  transition: transform 0.2s;
+}
+
+.trailer-link img:hover {
+  transform: scale(1.1);
+}
+
 
 /* Forms */
 .card {

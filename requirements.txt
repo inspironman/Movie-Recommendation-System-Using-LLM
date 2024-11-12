@@ -45,4 +45,4 @@ Werkzeug
 yarl
 sqlalchemy 
 psycopg2-binary
- 
+flask_caching
