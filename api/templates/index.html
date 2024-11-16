@@ -22,8 +22,10 @@
       <div class="container">
         <!-- Logo and Navigation -->
         <div class="d-flex justify-content-between align-items-center mb-4">
-          <h1 class="logo"><a href="{{ url_for('index') }}">Mood Flicks</a></h1>
-
+          <h1 class="logo d-flex align-items-center">
+            <a href="{{ url_for('index') }}">Mood Flicks</a>
+            <img src="{{ url_for('static', filename='images/background3-removebg-preview.png') }}" alt="img" class="logo-image">
+          </h1>
           <div class="auth-buttons">
             {% if 'user_id' in session and username %}
             <div class="d-flex align-items-center">
@@ -60,10 +62,12 @@
                   {% with messages = get_flashed_messages(with_categories=true) %}
                   {% if messages %}
                   {% for category, message in messages %}
-                  <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                  {% if category == 'login_error' %}
+                  <div class="alert alert-danger alert-dismissible fade show" role="alert">
                     {{ message }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                   </div>
+                  {% endif %}
                   {% endfor %}
                   {% endif %}
                   {% endwith %}
@@ -107,10 +111,12 @@
                 {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                 {% for category, message in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {% if category == 'register_error' %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
                   {{ message }}
                   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
+                {% endif %}
                 {% endfor %}
                 {% endif %}
                 {% endwith %}
@@ -151,36 +157,60 @@
             </div>
           </div>
         </div>
+        {% if show_register_modal %}
+        <script>
+          document.addEventListener('DOMContentLoaded', function () {
+            var registerModal = new bootstrap.Modal(document.getElementById('registerModal'));
+            registerModal.show();
+          });
+        </script>
+        {% endif %}
+
 
 
         <!-- Main Navigation -->
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark rounded mb-3">
           <div class="container-fluid">
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-              <span class="navbar-toggler-icon"></span>
+              <span class="navbar-toggler-icon">
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-              <ul class="navbar-nav">
+              <!-- Left side main navigation -->
+              <ul class="navbar-nav me-auto">
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}">HOME</a></li>
-                <li class="nav-item"><a class="nav-link" href="#">MY MOVIES</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('top_rated_movies') }}">TOP RATED</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('trending_movies') }}">TRENDING</a></li>
+                <li class="nav-item"><a class="nav-link" href="#">UPCOMING</a></li>
               </ul>
+
+              <!-- Right side sub-navigation -->
+              <div class="recommendation-types">
+                <button onclick="openEntryModal('Content-based')"
+                  class="btn btn-outline-light btn-sm me-2">Content-based</button>
+                <button onclick="openEntryModal('Genre-based')"
+                  class="btn btn-outline-light btn-sm me-2">Genre-based</button>
+                <button onclick="openEntryModal('Mood-based')" class="btn btn-outline-light btn-sm">Mood-based</button>
+              </div>
             </div>
           </div>
         </nav>
 
-        <!-- Sub Navigation with Search -->
-        <div class="d-flex justify-content-center align-items-center bg-light p-3 rounded">
-          <div class="recommendation-types">
-            <button onclick="openEntryModal('Content-based')" class="btn btn-outline-dark me-2">Content-based</button>
-            <button onclick="openEntryModal('Genre-based')" class="btn btn-outline-dark me-2">Genre-based</button>
-            <button onclick="openEntryModal('Mood-based')" class="btn btn-outline-dark">Mood-based</button>
-          </div>
-        </div>
-      </div>
     </header>
 
+    {% if not movies %}
+    <div class="main-page-container">
+        <div class="image-wrapper">
+            <div class="image-container">
+                <img src="{{ url_for('static', filename='images/background2-removebg-preview.png') }}" alt="Image 2">
+            </div>
+            <div class="image-container">
+                <img src="{{ url_for('static', filename='images/Designer.png') }}" alt="Image 3">
+            </div>
+        </div>
+        <p class="lead text-center mt-4">Discover exciting movies by searching or exploring categories!</p>
+    </div>
+    {% endif %}
+    
     <!-- Main Content -->
     <main class="container py-4">
       <!-- Movie Recommendations Section -->
@@ -231,14 +261,16 @@
           </div>
           {% endfor %}
         </div>
-
         <div class="text-center mt-4 mb-5">
+          {% if recommendation_type not in ["content_based", "genre_based", "mood_based"] %}
           <button onclick="loadMore('{{ recommendation_type }}')" class="btn btn-primary">Load More</button>
+          {% endif %}
         </div>
       </div>
       {% endif %}
     </main>
   </div>
+
 
   <!-- Entry Modal -->
   <div class="modal fade" id="entryModal" tabindex="-1" aria-labelledby="entryModalLabel" aria-hidden="true">
@@ -365,9 +397,9 @@
                   <p><strong>Director:</strong> ${movie.director || 'N/A'}</p>
                   <p><strong>Overview:</strong> ${movie.overview || 'No overview available'}</p>
                   ${movie.trailer_link ?
-                            `<a href="${movie.trailer_link}" target="_blank" class="trailer-link">Trailer</a>` :
-                            '<span class="text-muted">No trailer available'
-                          }
+                  `<a href="${movie.trailer_link}" target="_blank" class="trailer-link">Trailer</a>` :
+                  '<span class="text-muted">No trailer available'
+                }
               </div>
           </div>
 

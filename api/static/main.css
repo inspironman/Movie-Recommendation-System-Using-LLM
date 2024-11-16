@@ -273,3 +273,87 @@ body {
 .btn-close {
   filter: invert(1) grayscale(100%) brightness(200%);
 }
+
+.logo {
+  display: flex;
+  align-items: center;
+}
+
+.logo a {
+  text-decoration: none;
+  margin-right: 10px; /* Adds space between text and image */
+}
+
+.logo-image {
+  height: 1em; /* Makes image same height as text */
+  width: auto; /* Maintains aspect ratio */
+}
+
+.recommendation-types {
+  display: flex;
+  align-items: center;
+}
+
+@media (max-width: 991.98px) {
+  .recommendation-types {
+      margin-top: 1rem;
+      justify-content: center;
+  }
+  
+  .recommendation-types button {
+      font-size: 0.8rem;
+  }
+}
+
+.main-page-container {
+  width: 100%;
+  padding: 2rem;
+  margin: 0 auto;
+}
+
+.image-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.image-container {
+  flex: 1;
+  min-width: 300px;
+  max-width: 500px;
+  padding: 1rem;
+}
+
+.image-container img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  transition: transform 0.3s ease;
+}
+
+/* Optional: Add hover effect */
+.image-container img:hover {
+  transform: scale(1.02);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .image-wrapper {
+      gap: 1rem;
+  }
+  
+  .image-container {
+      min-width: 250px;
+      padding: 0.5rem;
+  }
+}
+
+.lead {
+  color: wheat;
+  font-size: 1.25rem;
+  margin-top: 2rem;
+}

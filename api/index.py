@@ -79,153 +79,134 @@ def get_movie_details_by_title(movie_title):
             }
     return None
 
+def generate_genre_based_prompt(number, category):
+    return f"""Recommend the best {number} {category.capitalize()} movies to watch. List only the titles, one per line:"""
+
+def generate_mood_based_prompt(number, category):
+    return f"""Recommend the best movies to watch. If a person is feeling {category.capitalize()}"""
+
+def get_movie_titles_from_prompt(number, prompt_content):
+    """
+    Get a list of movie titles from a prompt.
+    """
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant that recommends movies. Respond only with the titles of the movies, one per line."},
+            {"role": "user", "content": prompt_content}
+        ],
+        temperature=0.7,
+        max_tokens=150,
+        top_p=1,
+        frequency_penalty=0,
+        presence_penalty=0
+    )
+    
+    movie_titles = response.choices[0].message.content.strip().split('\n')
+    return movie_titles[:number]
+
+def fetch_movie_details(title):
+    """
+    Fetches detailed information for a movie by title from TMDb.
+    """
+    movie_info = get_movie_details_by_title(title)
+    if not movie_info:
+        return None
+    
+    movie_id = movie_info.get('id')
+    movie_detail = {
+        'title': movie_info['title'],
+        'overview': movie_info['overview'],
+        'release_date': movie_info['release_date'],
+        'vote_average': movie_info['vote_average'],
+        'poster_path': movie_info['poster_path'],
+        'genre': [],
+        'runtime': 'N/A',
+        'director': 'N/A',
+        'trailer_link': None
+    }
+    
+    # Fetch additional details using TMDb API
+    try:
+        details_url = f"https://api.themoviedb.org/3/movie/{movie_id}?api_key={TMDB_API_KEY}&append_to_response=credits,videos"
+        details_response = requests.get(details_url)
+        if details_response.status_code == 200:
+            movie_details_data = details_response.json()
+            
+            # Update movie details with extended information
+            movie_detail.update({
+                'genre': [genre['name'] for genre in movie_details_data.get('genres', [])],
+                'runtime': movie_details_data.get('runtime', 'N/A'),
+                'director': next((crew['name'] for crew in movie_details_data.get('credits', {}).get('crew', []) 
+                                  if crew['job'] == 'Director'), 'N/A'),
+                'trailer_link': next((f"https://www.youtube.com/watch?v={video['key']}" 
+                                      for video in movie_details_data.get('videos', {}).get('results', [])
+                                      if video['type'] == 'Trailer'), None)
+            })
+    except Exception as e:
+        print(f"Error getting additional details for '{title}': {e}")
+
+    return movie_detail
+
 @app.route('/')
 def index():
     recommendation_type = request.args.get('type')
     username = session.get('username')
     return render_template('index.html', recommendation_type=recommendation_type, username=username)
 
-
-
 @app.route("/genre_based", methods=["GET", "POST"])
 def genre_based():
+    username = session.get('username')
     if request.method == "POST":
         category = request.form["category"]
         number = int(request.form["number"])
+        prompt_content = generate_genre_based_prompt(number, category)
+        movie_titles = get_movie_titles_from_prompt(number, prompt_content)
         
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant that recommends movies. Respond only with the titles of the movies, one per line."},
-                {"role": "user", "content": generate_genre_based_prompt(number, category)}
-            ],
-            temperature=0.7,
-            max_tokens=150,
-            top_p=1,
-            frequency_penalty=0,
-            presence_penalty=0
-        )
-        
-        movie_titles = response.choices[0].message.content.strip().split('\n')
-        movie_details = []
+        movie_details = [fetch_movie_details(title) for title in movie_titles if fetch_movie_details(title)]
+        return render_template("index.html", movies=movie_details,  username=username, recommendation_type='genre_based')
+    
+    return render_template("index.html", movies=None, username=username, recommendation_type="genre_based")
 
-        for title in movie_titles:
-            # Fetch movie details by title to get the movie ID first
-            movie_info = get_movie_details_by_title(title)
-            if movie_info:
-                movie_id = movie_info.get('id')
-                
-                # Get basic movie info
-                movie_details.append({
-                    'title': movie_info['title'],
-                    'overview': movie_info['overview'],
-                    'release_date': movie_info['release_date'],
-                    'vote_average': movie_info['vote_average'],
-                    'poster_path': movie_info['poster_path'],
-                    'genre': [],  # You'll need to get this from additional API call
-                    'runtime': 'N/A',  # You'll need to get this from additional API call
-                    'director': 'N/A',  # You'll need to get this from additional API call
-                    'trailer_link': None  # You'll need to get this from additional API call
-                })
-
-                # Get additional details
-                try:
-                    details_url = f"https://api.themoviedb.org/3/movie/{movie_id}?api_key={TMDB_API_KEY}&append_to_response=credits,videos"
-                    details_response = requests.get(details_url)
-                    if details_response.status_code == 200:
-                        movie_details_data = details_response.json()
-                        
-                        # Update with additional information
-                        movie_details[-1].update({
-                            'genre': [genre['name'] for genre in movie_details_data.get('genres', [])],
-                            'runtime': movie_details_data.get('runtime', 'N/A'),
-                            'director': next((crew['name'] for crew in movie_details_data.get('credits', {}).get('crew', []) 
-                                           if crew['job'] == 'Director'), 'N/A'),
-                            'trailer_link': next((f"https://www.youtube.com/watch?v={video['key']}" 
-                                                for video in movie_details_data.get('videos', {}).get('results', [])
-                                                if video['type'] == 'Trailer'), None)
-                        })
-                except Exception as e:
-                    print(f"Error getting additional details: {e}")
-
-        return render_template("index.html", movies=movie_details, recommendation_type='genre_based')
-
-    return render_template("index.html", movies=None)
-
-
-def generate_mood_based_prompt(number, mood):
-    return f"Suggest exactly {number} movies that are good to watch when feeling {mood}. Only list the movie titles, one per line."
-
-@app.route("/mood_based", methods=("GET", "POST"))
+@app.route("/mood_based", methods=["GET", "POST"])
 def mood_based():
+    username = session.get('username')
     if request.method == "POST":
         mood = request.form["mood"]
-        number = int(request.form["number"])  # Convert to integer
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",   
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant that recommends movies. Respond only with the titles of the movies, one per line. Do not include any additional text or numbering."},
-                {"role": "user", "content": generate_mood_based_prompt(number, mood)}
-            ],
-            temperature=0.7,
-            max_tokens=150,
-            top_p=1,
-            frequency_penalty=0,
-            presence_penalty=0
-        )
+        number = int(request.form["number"])
+        prompt_content = generate_mood_based_prompt(number, mood)
+        movie_titles = get_movie_titles_from_prompt(number, prompt_content)
         
-        movie_titles = response.choices[0].message.content.strip().split('\n')
-        # Ensure we only take the requested number of movies
-        movie_titles = movie_titles[:number]
-        
-        movie_details = []
-        for title in movie_titles:
-            details = get_movie_details(title)
-            if details:
-                movie_details.append(details)
-
-        return render_template("index.html", movies=movie_details)
-
-    return render_template("index.html", movies=None)
-
-
+        movie_details = [fetch_movie_details(title) for title in movie_titles if fetch_movie_details(title)]
+        return render_template("index.html", movies=movie_details, username=username, recommendation_type="mood_based")
+    
+    return render_template("index.html", movies=None, username=username)
 
 @app.route('/content_based', methods=['GET', 'POST'])
 def content_based():
+    username = session.get('username')
     if request.method == 'POST':
         movie = request.form['movie']
         number = int(request.form['number'])
         
-        # Check if the movie exists in our dataset
+        # Check if the movie exists in the dataset
         if movie not in recommender.get_movie_titles():
             error_message = f"Sorry, '{movie}' is not in our database. Please try another movie."
-            return render_template('index.html', recommendation_type='content', error_message=error_message)
+            return render_template('index.html', recommendation_type='content_based', error_message=error_message, username=username)
         
         try:
-            # Get recommendations using your ContentRecommender
+            # Get recommendations using the ContentRecommender
             recommended_titles = recommender.get_recommendations(movie, number)
+            movie_details = [fetch_movie_details(title) for title in recommended_titles if fetch_movie_details(title)]
             
-            # Fetch details for each recommended movie from TMDB
-            movies = []
-            for title in recommended_titles:
-                details = get_movie_details(title)
-                if details:
-                    movies.append(details)
-            
-            return render_template('index.html', recommendation_type='content', movies=movies)
+            return render_template('index.html', recommendation_type='content_based', movies=movie_details, username=username)
+        
         except Exception as e:
             error_message = f"An error occurred: {str(e)}"
-            return render_template('index.html', recommendation_type='content', error_message=error_message)
+            return render_template('index.html', recommendation_type='content_based', username=username)
     
-    return render_template('index.html', recommendation_type='content')
+    return render_template('index.html', username=username, recommendation_type="content_based")
 
-
-
-def generate_genre_based_prompt(number, category):
-    return f"""Recommend the best {number} {category.capitalize()} movies to watch. List only the titles, one per line:"""
-
-def generate_mood_based_prompt(number, category):
-    return f"""Recommend the best movies to watch. If a person is feeling {category.capitalize()}"""
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -251,7 +232,7 @@ def register():
                 return redirect(url_for('index'))
         else:
             # If registration failed, show error
-            flash(result, 'error')
+            flash(result, 'register_error')
             return render_template('index.html', 
                                 show_register_modal=True,
                                 reg_username=username,
@@ -277,7 +258,7 @@ def login():
             flash('Login successful!', 'success')
             return redirect(url_for('index'))
         else:
-            flash('Invalid username or password', 'error')
+            flash('Invalid username or password', 'login_error')
             # Pass show_login_modal=True to keep the modal open
             return render_template('index.html', 
                                 show_login_modal=True, 
@@ -325,7 +306,7 @@ def top_rated_movies():
     page = request.args.get('page', 1, type=int)  # Get the page parameter from the request
     top_rated_url = f"https://api.themoviedb.org/3/movie/top_rated?api_key={TMDB_API_KEY}&language=en-US&page={page}"
     response = requests.get(top_rated_url)
-    
+    username = session.get('username')
     if response.status_code == 200:
         movies = response.json()['results']
         movie_details = []
@@ -347,10 +328,10 @@ def top_rated_movies():
         if request.headers.get('Accept') == 'application/json':
             return jsonify(movies=movie_details)
         
-        return render_template('index.html', movies=movie_details, recommendation_type='trending')
+        return render_template('index.html', movies=movie_details, recommendation_type='trending', username=username)
     else:
         flash('Error fetching trending movies', 'error')
-        return render_template('index.html')
+        return render_template('index.html', username=username)
 
 
 @app.route('/trending', methods=['GET'])
@@ -358,7 +339,7 @@ def trending_movies():
     page = request.args.get('page', 1, type=int)
     trending_url = f"https://api.themoviedb.org/3/trending/movie/day?api_key={TMDB_API_KEY}&language=en-US&page={page}"
     response = requests.get(trending_url)
-    
+    username = session.get('username')
     if response.status_code == 200:
         movies = response.json()['results']
         movie_details = []
@@ -380,10 +361,10 @@ def trending_movies():
         if request.headers.get('Accept') == 'application/json':
             return jsonify(movies=movie_details)
         
-        return render_template('index.html', movies=movie_details, recommendation_type='trending')
+        return render_template('index.html', movies=movie_details, recommendation_type='trending', username=username)
     else:
         flash('Error fetching trending movies', 'error')
-        return render_template('index.html')
+        return render_template('index.html', username=username)
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=5050, debug=True)
