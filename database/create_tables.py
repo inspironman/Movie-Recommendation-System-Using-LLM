@@ -1,14 +1,17 @@
 from sqlalchemy import create_engine
 from models import Base
+import os
 
-# Update this URL to point to your local PostgreSQL instance
-DATABASE_URL = "postgresql://user:password@localhost:5432/moviedb"
-engine = create_engine(DATABASE_URL)
+# Use localhost since the port is mapped from the container to your local machine
+database_url = "postgresql://postgres:mysecretpassword@localhost:5432/moviedb"
+engine = create_engine(database_url)
 
 def create_tables():
-    Base.metadata.create_all(engine)
-
+    try:
+        Base.metadata.create_all(engine)
+        print("Tables created successfully!")
+    except Exception as e:
+        print(f"Error creating tables: {e}")
 
 if __name__ == "__main__":
     create_tables()
-    print("Database tables created successfully.")

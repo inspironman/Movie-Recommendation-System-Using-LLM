@@ -1,0 +1,31 @@
+project/
+├── .env
+├── .gitignore
+├── Dockerfile
+├── docker-compose.yml
+├── requirements.txt
+├── api/
+│   ├── index.py
+│   ├── index2.py
+│   ├── static/
+│   │   ├── images/
+│   │   │   ├── Designer.png
+│   │   │   ├── background1-removebg-preview.png
+│   │   │   ├── background2-removebg-preview.png
+│   │   │   ├── background3-removebg-preview.png
+│   │   └── main.css
+│   ├── templates/
+│   │   └── index.html
+├── data/
+│   ├── filtered_movies_data.csv
+│   ├── tmdb_5000_credits.csv
+│   ├── tmdb_5000_movies.csv
+├── database/
+│   ├── __init__.py
+│   ├── create_tables.py
+│   ├── models.py
+│   ├── user_operations.py
+├── src/
+│   ├── content_recommender.py
+│   └── process_data.py
+

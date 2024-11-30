@@ -3,10 +3,10 @@ import psycopg2
 from werkzeug.security import generate_password_hash, check_password_hash
 
 def get_db_connection():
-    db_host = os.environ.get('DB_HOST', 'localhost')
-    db_name = os.environ.get('DB_NAME', 'moviedb')
-    db_user = os.environ.get('DB_USER', 'user')
-    db_password = os.environ.get('DB_PASSWORD', 'password')
+    db_host = os.environ.get('POSTGRES_HOST', 'localhost')
+    db_name = os.environ.get('POSTGRES_DB', 'moviedb')
+    db_user = os.environ.get('POSTGRES_USER', 'postgres')
+    db_password = os.environ.get('POSTGRES_PASSWORD', 'mysecretpassword')
     db_port = os.environ.get('DB_PORT', '5432')
 
     conn = psycopg2.connect(
@@ -17,6 +17,7 @@ def get_db_connection():
         port=db_port
     )
     return conn
+
 
 
 

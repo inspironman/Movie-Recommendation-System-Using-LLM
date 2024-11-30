@@ -46,3 +46,5 @@ yarl
 sqlalchemy 
 psycopg2-binary
 flask_caching
+pytest 
+pytest-mock

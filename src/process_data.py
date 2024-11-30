@@ -52,7 +52,9 @@ def filter_columns(merged_df):
     """
     print("Columns in merged DataFrame:", merged_df.columns.tolist())
     
-    filtered_df = merged_df[['movie_id', 'title', 'overview','genres', 'keywords', 'vote_average', 'vote_count', 'popularity', 'release_date', 'cast', 'crew']]
+    filtered_df = merged_df[['movie_id', 'title', 'overview','genres', 'keywords', 
+                             'vote_average', 'vote_count', 'popularity', 
+                             'release_date', 'cast', 'crew']]
     filtered_df.dropna(inplace=True)
     filtered_df['genres'] = filtered_df['genres'].apply(convert)
     filtered_df['keywords'] = filtered_df['keywords'].apply(convert)
@@ -60,8 +62,6 @@ def filter_columns(merged_df):
     filtered_df['crew'] = filtered_df['crew'].apply(fetch_director)
 
     return filtered_df
-
-
 
 def save_filtered_data(filtered_df, output_path):
     """
