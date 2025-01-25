@@ -105,6 +105,10 @@ class MovieRecommenderApp:
         def trending_movies():
             return self.trending_movies()
 
+        @app.route('/upcoming', methods=['GET'])
+        def upcoming_movies():
+            return self.trending_movies()
+        
     def get_movie_details(self, movie_id):
         """Fetches additional details like runtime, director, and trailer for a given movie ID."""
         @self.cache.memoize(timeout=3600)
@@ -421,6 +425,40 @@ class MovieRecommenderApp:
             else:
                 flash('Error fetching trending movies', 'error')
                 return render_template('index.html', username=username)
+            
+    def upcoming_movies(self):
+        page = request.args.get('page', 1, type=int)
+        upcoming_url = f"https://api.themoviedb.org/3/movie/upcoming?api_key={self.TMDB_API_KEY}&language=en-US&page={page}"
+        response = requests.get(upcoming_url)
+        username = session.get('username')
+        
+        if response.status_code == 200:
+            movies = response.json()['results']
+            movie_details = []
+            
+            for movie in movies:
+                genres = [self.genre_map[genre_id] for genre_id in movie['genre_ids'] if genre_id in self.genre_map]
+                runtime, director, trailer_link = self.get_movie_details(movie['id'])
+                movie_details.append({
+                    'title': movie['title'],
+                    'overview': movie['overview'],
+                    'release_date': movie['release_date'],
+                    'vote_average': movie['vote_average'],
+                    'poster_path': f"https://image.tmdb.org/t/p/w500{movie['poster_path']}" if movie['poster_path'] else None,
+                    'genre': genres,
+                    'runtime': runtime,         # Add runtime to movie details
+                    'director': director,       # Add director to movie details
+                    'trailer_link': trailer_link  # Add trailer link to movie details
+                })
+            
+            if request.headers.get('Accept') == 'application/json':
+                return jsonify(movies=movie_details)
+            
+            return render_template('index.html', movies=movie_details, recommendation_type='upcoming', username=username)
+        else:
+            flash('Error fetching upcoming movies', 'error')
+        return render_template('index.html', username=username)
+
 
     def run(self, host="0.0.0.0", port=8080, debug=True):
         self.app.run(host=host, port=port, debug=debug)
